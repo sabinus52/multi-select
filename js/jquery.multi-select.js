@@ -1,5 +1,5 @@
 /*
-* MultiSelect v0.9.3
+* MultiSelect v0.9.4
 * Copyright (c) 2012 Louis Cuny
 *
 * This program is free software. It comes without any warranty, to
@@ -121,8 +121,13 @@
             that.$selectionUl.find('.ms-optgroup-label').hide();
 
             if ($(this).prop('disabled') || ms.prop('disabled')){
-              selectableLi.prop('disabled', true);
-              selectableLi.addClass(that.options.disabledClass);
+              if (this.selected) {
+                selectedLi.prop('disabled', true);
+                selectedLi.addClass(that.options.disabledClass);
+              } else {
+                selectableLi.prop('disabled', true);
+                selectableLi.addClass(that.options.disabledClass);
+              }
             }
 
             if (optgroupId){
@@ -135,15 +140,17 @@
           }
         });
 
-        if (that.options.selectableHeader){
+        if (that.options.selectableHeader)
           that.$selectableContainer.append(that.options.selectableHeader);
-        }
         that.$selectableContainer.append(that.$selectableUl);
-        
-        if (that.options.selectionHeader){
+        if (that.options.selectableFooter)
+          that.$selectableContainer.append(that.options.selectableFooter);
+
+        if (that.options.selectionHeader)
           that.$selectionContainer.append(that.options.selectionHeader);
-        }
-        this.$selectionContainer.append(that.$selectionUl);
+        that.$selectionContainer.append(that.$selectionUl);
+        if (that.options.selectionFooter)
+          that.$selectionContainer.append(that.options.selectionFooter);
 
         that.$container.append(that.$selectableContainer);
         that.$container.append(that.$selectionContainer);
@@ -216,9 +223,9 @@
             if (liFocused.length >0){
               var method = keyContainer == 'ms-selectable' ? 'select' : 'deselect';
               if (keyContainer == 'ms-selectable'){
-                that.select(liFocused.attr('id').replace('-selectable', ''));
+                that.select(liFocused.data('ms-value'));
               } else {
-                that.deselect(liFocused.attr('id').replace('-selection', ''));
+                that.deselect(liFocused.data('ms-value'));
               }
               lis.removeClass('ms-hover');
               that.scrollTo = 0;
@@ -264,7 +271,7 @@
             } else {
               that.$selectableUl.focusin();
               that.$selectionUl.focusout();
-            }        
+            }
           }
         }
 
@@ -374,7 +381,8 @@
     },
 
     'select_all' : function(){
-      var ms = this.$element;
+      var ms = this.$element,
+          values = ms.val();
 
       ms.find('option').prop('selected', true);
       this.$selectableUl.find('.ms-elem-selectable').addClass('ms-selected').hide();
@@ -384,10 +392,17 @@
       this.$selectionUl.focusin();
       this.$selectableUl.focusout();
       ms.trigger('change');
+      if (typeof this.options.afterSelect == 'function') {
+        var selectedValues = $.grep(ms.val(), function(item){
+          return $.inArray(item, values) < 0;
+        });
+        this.options.afterSelect.call(this, selectedValues);
+      }
     },
 
     'deselect_all' : function(){
-      var ms = this.$element;
+      var ms = this.$element,
+          values = ms.val();
 
       ms.find('option').prop('selected', false);
       this.$selectableUl.find('.ms-elem-selectable').removeClass('ms-selected').show();
@@ -397,6 +412,9 @@
       this.$selectableUl.focusin();
       this.$selectionUl.focusout();
       ms.trigger('change');
+      if (typeof this.options.afterDeselect == 'function') {
+        this.options.afterDeselect.call(this, values);
+      }
     },
 
     isDomNode: function (attr){
@@ -419,7 +437,7 @@
   $.fn.multiSelect = function () {
     var option = arguments[0],
         args = arguments;
-    
+
     return this.each(function () {
       var $this = $(this),
           data = $this.data('multiselect'),
