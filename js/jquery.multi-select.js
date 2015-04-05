@@ -1,5 +1,5 @@
 /*
-* MultiSelect v0.9.7
+* MultiSelect v0.9.8
 * Copyright (c) 2012 Louis Cuny
 *
 * This program is free software. It comes without any warranty, to
@@ -340,6 +340,10 @@
               $(this).find('.ms-optgroup-label').show();
             }
           });
+        } else {
+          if (that.options.keepOrder){
+            selections.insertAfter(that.$selectionUl.find('.ms-selected').last());  
+          }
         }
         if (method !== 'init'){
           ms.trigger('change');
@@ -454,7 +458,8 @@
   $.fn.multiSelect.defaults = {
     selectableOptgroup: false,
     disabledClass : 'disabled',
-    dblClick : false
+    dblClick : false,
+    keepOrder: false
   };
 
   $.fn.multiSelect.Constructor = MultiSelect;
