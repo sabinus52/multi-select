@@ -1,5 +1,5 @@
 /*
-* MultiSelect v0.9.10
+* MultiSelect v0.9.11
 * Copyright (c) 2012 Louis Cuny
 *
 * This program is free software. It comes without any warranty, to
@@ -108,7 +108,7 @@
           attributes += attr.name+'="'+attr.value+'" ';
         }
       }
-      var selectableLi = $('<li '+attributes+'><span>'+$option.text()+'</span></li>'),
+      var selectableLi = $('<li '+attributes+'><span>'+that.escapeHTML($option.text())+'</span></li>'),
           selectedLi = selectableLi.clone(),
           value = $option.val(),
           elementId = that.sanitize(value);
@@ -185,6 +185,10 @@
           that.generateLisFromOption($option.get(0), index, option.nested);
         }
       })
+    },
+
+    'escapeHTML' : function(text){
+      return $("<div>").text(text).html();
     },
 
     'activeKeyboard' : function($list){
@@ -349,6 +353,11 @@
           selections = this.$selectionUl.find('#' + msIds.join('-selection, #') + '-selection').filter(':not(.'+that.options.disabledClass+')'),
           options = ms.find('option:not(:disabled)').filter(function(){ return($.inArray(this.value, value) > -1); });
 
+      if (method === 'init'){
+        selectables = this.$selectableUl.find('#' + msIds.join('-selectable, #')+'-selectable'),
+        selections = this.$selectionUl.find('#' + msIds.join('-selection, #') + '-selection');
+      }
+
       if (selectables.length > 0){
         selectables.addClass('ms-selected').hide();
         selections.addClass('ms-selected').show();
@@ -394,7 +403,7 @@
           ms = this.$element,
           msIds = $.map(value, function(val){ return(that.sanitize(val)); }),
           selectables = this.$selectableUl.find('#' + msIds.join('-selectable, #')+'-selectable'),
-          selections = this.$selectionUl.find('#' + msIds.join('-selection, #')+'-selection').filter('.ms-selected'),
+          selections = this.$selectionUl.find('#' + msIds.join('-selection, #')+'-selection').filter('.ms-selected').filter(':not(.'+that.options.disabledClass+')'),
           options = ms.find('option').filter(function(){ return($.inArray(this.value, value) > -1); });
 
       if (selections.length > 0){
