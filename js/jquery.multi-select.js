@@ -1,5 +1,5 @@
 /*
-* MultiSelect v0.9.11
+* MultiSelect v0.9.12
 * Copyright (c) 2012 Louis Cuny
 *
 * This program is free software. It comes without any warranty, to
@@ -149,18 +149,18 @@
           $selectionOptgroup.append($(optgroupTpl));
           if (that.options.selectableOptgroup){
             $selectableOptgroup.find('.ms-optgroup-label').on('click', function(){
-              var values = $optgroup.children(':not(:selected)').map(function(){ return $(this).val() }).get();
+              var values = $optgroup.children(':not(:selected, :disabled)').map(function(){ return $(this).val() }).get();
               that.select(values);
             });
             $selectionOptgroup.find('.ms-optgroup-label').on('click', function(){
-              var values = $optgroup.children(':selected').map(function(){ return $(this).val() }).get();
+              var values = $optgroup.children(':selected:not(:disabled)').map(function(){ return $(this).val() }).get();
               that.deselect(values);
             });
           }
           that.$selectableUl.append($selectableOptgroup);
           that.$selectionUl.append($selectionOptgroup);
         }
-        index = index == undefined ? $selectableOptgroup.children().length : index + 1;
+        index = index == undefined ? $selectableOptgroup.find('ul').children().length : index + 1;
         selectableLi.insertAt(index, $selectableOptgroup.children());
         selectedLi.insertAt(index, $selectionOptgroup.children());
       } else {
@@ -244,10 +244,6 @@
           containerHeight = $list.height(),
           containerSelector = '#'+this.$container.prop('id');
 
-      // Deactive mouseenter event when move is active
-      // It fixes a bug when mouse is over the list
-      $elems.off('mouseenter');
-
       $elems.removeClass('ms-hover');
       if (direction === 1){ // DOWN
 
@@ -298,21 +294,22 @@
     },
 
     'selectHighlighted' : function($list){
-        var $elems = $list.find(this.elemsSelector),
-            $highlightedElem = $elems.filter('.ms-hover').first();
+      var $elems = $list.find(this.elemsSelector),
+          $highlightedElem = $elems.filter('.ms-hover').first();
 
-        if ($highlightedElem.length > 0){
-          if ($list.parent().hasClass('ms-selectable')){
-            this.select($highlightedElem.data('ms-value'));
-          } else {
-            this.deselect($highlightedElem.data('ms-value'));
-          }
-          $elems.removeClass('ms-hover');
+      if ($highlightedElem.length > 0){
+        if ($list.parent().hasClass('ms-selectable')){
+          this.select($highlightedElem.data('ms-value'));
+        } else {
+          this.deselect($highlightedElem.data('ms-value'));
         }
+        $elems.removeClass('ms-hover');
+      }
     },
 
     'switchList' : function($list){
       $list.blur();
+      this.$container.find(this.elemsSelector).removeClass('ms-hover');
       if ($list.parent().hasClass('ms-selectable')){
         this.$selectionUl.focus();
       } else {
@@ -323,13 +320,9 @@
     'activeMouse' : function($list){
       var that = this;
 
-      $list.on('mousemove', function(){
-        var elems = $list.find(that.elemsSelector);
-
-        elems.on('mouseenter', function(){
-          elems.removeClass('ms-hover');
-          $(this).addClass('ms-hover');
-        });
+      $('body').on('mouseenter', that.elemsSelector, function(){
+        $(this).parents('.ms-container').find(that.elemsSelector).removeClass('ms-hover');
+        $(this).addClass('ms-hover');
       });
     },
 
@@ -340,6 +333,7 @@
 
     'destroy' : function(){
       $("#ms-"+this.$element.attr("id")).remove();
+      this.$element.css('position', '').css('left', '')
       this.$element.removeData('multiselect');
     },
 
@@ -361,7 +355,10 @@
       if (selectables.length > 0){
         selectables.addClass('ms-selected').hide();
         selections.addClass('ms-selected').show();
+
         options.prop('selected', true);
+
+        that.$container.find(that.elemsSelector).removeClass('ms-hover');
 
         var selectableOptgroups = that.$selectableUl.children('.ms-optgroup-container');
         if (selectableOptgroups.length > 0){
@@ -380,8 +377,8 @@
             }
           });
         } else {
-          if (that.options.keepOrder){
-            var selectionLiLast = that.$selectionUl.find('.ms-selected'); 
+          if (that.options.keepOrder && method !== 'init'){
+            var selectionLiLast = that.$selectionUl.find('.ms-selected');
             if((selectionLiLast.length > 1) && (selectionLiLast.last().get(0) != selections.get(0))) {
               selections.insertAfter(selectionLiLast.last());
             }
@@ -410,6 +407,8 @@
         selectables.removeClass('ms-selected').show();
         selections.removeClass('ms-selected').hide();
         options.prop('selected', false);
+
+        that.$container.find(that.elemsSelector).removeClass('ms-hover');
 
         var selectableOptgroups = that.$selectableUl.children('.ms-optgroup-container');
         if (selectableOptgroups.length > 0){
@@ -471,12 +470,12 @@
     },
 
     sanitize: function(value){
-      var hash = 0, i, char;
+      var hash = 0, i, character;
       if (value.length == 0) return hash;
       var ls = 0;
       for (i = 0, ls = value.length; i < ls; i++) {
-        char  = value.charCodeAt(i);
-        hash  = ((hash<<5)-hash)+char;
+        character  = value.charCodeAt(i);
+        hash  = ((hash<<5)-hash)+character;
         hash |= 0; // Convert to 32bit integer
       }
       return hash;

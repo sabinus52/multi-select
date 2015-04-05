@@ -102,6 +102,26 @@ describe("multiSelect", function() {
     });
   });
 
+  describe('destroy', function(){
+
+    describe('destroy multi select', function(){
+      beforeEach(function(){
+        select.multiSelect();
+        msContainer = select.next();
+        select.multiSelect('destroy');
+      });
+
+      it('should show the original select', function(){
+        expect(select.css('position')).not.toBe('absolute');
+        expect(select.css('left')).not.toBe('-9999px');
+      });
+
+      it('should destroy the multiSelect container', function(){
+        expect(select.next().size()).toEqual(0);
+      });
+    });
+  });
+
   describe('optgroup', function(){
     var optgroupMsContainer, optgroupSelect, optgroupLabels;
 
@@ -296,7 +316,7 @@ describe("multiSelect", function() {
         $('#multi-select').multiSelect();
 
         clickedItem = $('.ms-selection ul.ms-list li').first();
-        value = clickedItem.attr('id').replace('-selection', '');
+        value = clickedItem.data('ms-value');
         correspondingSelectableItem = $('.ms-selection ul.ms-list li').first();
         spyOnEvent(select, 'change');
         spyOnEvent(select, 'focus');
@@ -308,7 +328,7 @@ describe("multiSelect", function() {
       });
 
       it('should show associated selectable item', function(){
-        expect($('#'+value+'-selectable')).toBe(':visible');
+        expect($('#'+sanitize(value)+'-selectable')).toBe(':visible');
       });
 
       it('should remove the .ms-selected class to the corresponding selectable item', function(){
@@ -337,7 +357,7 @@ describe("multiSelect", function() {
         $('#multi-select').multiSelect();
 
         clickedItem = $('.ms-selection ul.ms-list li').first();
-        value = clickedItem.attr('id').replace('-selection', '');
+        value = clickedItem.data('ms-value');
         correspondingSelectableItem = $('.ms-selection ul.ms-list li').first();
         spyOnEvent(select, 'change');
         spyOnEvent(select, 'focus');
